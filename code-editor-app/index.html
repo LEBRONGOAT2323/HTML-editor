@@ -2,28 +2,55 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Code Editor - Login</title>
+  <title>Login - Mini Code Editor</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Mini Code Editor</h1>
 
-    <div id="auth-section">
-      <h2>Login</h2>
-      <input type="text" id="login-username" placeholder="Username">
-      <input type="password" id="login-password" placeholder="Password">
-      <button onclick="login()">Login</button>
+<div class="auth-container">
 
-      <h2>Sign Up</h2>
-      <input type="text" id="signup-username" placeholder="Username">
-      <input type="password" id="signup-password" placeholder="Password">
-      <button onclick="signup()">Sign Up</button>
-    </div>
+  <!-- LOGIN FORM -->
+  <div id="login-form">
+    <h2>Login</h2>
+    <input id="login-username" placeholder="Username">
+    <input id="login-password" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
 
-    <p id="message"></p>
+    <p class="switch-text">
+      Don't have an account?
+      <span onclick="showSignup()">Create Account Here</span>
+    </p>
   </div>
 
-  <script src="auth.js"></script>
+  <!-- SIGNUP FORM -->
+  <div id="signup-form" style="display:none;">
+    <h2>Create Account</h2>
+    <input id="signup-username" placeholder="Username">
+    <input id="signup-password" type="password" placeholder="Password">
+    <button onclick="signup()">Create Account</button>
+
+    <p class="switch-text">
+      Already have an account?
+      <span onclick="showLogin()">Login Here</span>
+    </p>
+  </div>
+
+  <p id="message"></p>
+</div>
+
+<script src="auth.js"></script>
+
+<script>
+function showSignup(){
+  document.getElementById("login-form").style.display = "none";
+  document.getElementById("signup-form").style.display = "block";
+}
+
+function showLogin(){
+  document.getElementById("signup-form").style.display = "none";
+  document.getElementById("login-form").style.display = "block";
+}
+</script>
+
 </body>
 </html>
