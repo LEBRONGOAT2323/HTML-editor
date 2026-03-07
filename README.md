@@ -130,6 +130,6 @@ Created by **LebronGoat2323**
 
 Visit my website at https://lebrongoat2323.github.io/Goat/
 
-Join the discord at https://discord.gg/cp6uq68K
+Join the discord at https://discord.gg/wWgE8UFkEm
 
 Built as a lightweight tool for experimenting with HTML directly in the browser.
