@@ -362,3 +362,7 @@ function openProject(project) {
   document.getElementById('css-editor').value = project.css || '';
   document.getElementById('js-editor').value = project.js || '';
 }
+
+window.addEventListener('DOMContentLoaded', () => {
+  loadProjects();
+});
