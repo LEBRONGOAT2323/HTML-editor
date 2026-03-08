@@ -1,9 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = supabase;
 
 // --- Supabase setup ---
 const supabaseUrl = 'https://pofaqrahjhsjfraziodr.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZmFxcmFoamhzamZyYXppb2RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MTkwODMsImV4cCI6MjA4ODQ5NTA4M30.K2XaqVEoVF5EYf4wqnXKsB7yrb_UHUj4F6RNpmaFa2M';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
 // ---------------------------
 // File tabs system
@@ -16,6 +16,12 @@ let files = {
 let currentFile = 'index.html';
 
 function openFile(filename) {
+
+  // Save current file contents
+  if (currentFile) {
+    files[currentFile] = document.getElementById('code-editor').value;
+  }
+
   currentFile = filename;
   document.getElementById('code-editor').value = files[filename] || '';
 }
@@ -88,16 +94,18 @@ function runCode() {
 async function saveProject() {
   const name = document.getElementById('project-name').value;
   if (!name) return alert('Enter a project name!');
-  
-  const { data, error } = await supabase
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  const { data, error } = await supabaseClient
     .from('projects')
     .insert([{
-      user_id: supabase.auth.user().id,
+      user_id: user.id,
       project_name: name,
       files: files,
       created_at: new Date()
     }]);
-  
+
   if (error) console.error(error);
   else loadProjects();
 }
@@ -106,10 +114,13 @@ async function saveProject() {
 // Load projects from Supabase
 // ---------------------------
 async function loadProjects() {
-  const { data, error } = await supabase
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  const { data, error } = await supabaseClient
     .from('projects')
     .select('*')
-    .eq('user_id', supabase.auth.user().id)
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
   if (error) return console.error(error);
@@ -136,7 +147,7 @@ function displayProjects(projects) {
 // Logout logic
 // ---------------------------
 async function logout() {
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabaseClient.auth.signOut();
   if (error) console.error(error);
   else window.location.href = '/';
 }
