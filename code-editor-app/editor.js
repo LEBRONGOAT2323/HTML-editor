@@ -328,3 +328,37 @@ export async function openProject(projectId) {
   document.getElementById('project-name').value = data.name
   document.getElementById('code-editor').value = data.html
 }
+
+// Fetch saved projects for the current user
+async function loadProjects() {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('user_id', supabase.auth.user().id) // only the logged-in user's projects
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching projects:', error);
+    return;
+  }
+
+  displayProjects(data);
+}
+
+function displayProjects(projects) {
+  const list = document.getElementById('project-list');
+  list.innerHTML = ''; // clear old entries
+
+  projects.forEach(project => {
+    const btn = document.createElement('button');
+    btn.textContent = project.project_name;
+    btn.onclick = () => openProject(project); // load project into editor
+    list.appendChild(btn);
+  });
+}
+
+function openProject(project) {
+  document.getElementById('html-editor').value = project.html || '';
+  document.getElementById('css-editor').value = project.css || '';
+  document.getElementById('js-editor').value = project.js || '';
+}
