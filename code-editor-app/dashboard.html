@@ -1,60 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Code Editor</title>
-<link rel="stylesheet" href="styles.css">
+  <title>Code Editor</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
 
 <div class="topbar">
-<div class="logo">⚡ Web Code Editor</div>
-
-<div>
-<button onclick="runCode()">Run ▶</button>
-<button onclick="logout()">Logout</button>
-</div>
+  <div class="logo">⚡ Web Code Editor</div>
+  <div>
+    <button onclick="runCode()">Run ▶</button>
+    <button onclick="logout()">Logout</button>
+  </div>
 </div>
 
 <div class="editor-layout">
+  <div class="editor-panel">
+    <div class="file-bar" id="fileBar">
+      <div class="file-tab active" onclick="openFile('index.html')">index.html</div>
+      <div class="file-tab" onclick="openFile('styles.css')">styles.css</div>
+      <div class="file-tab" onclick="openFile('script.js')">script.js</div>
+      <button class="new-file" id="newFileBtn" onclick="createFile()">+</button>
+    </div>
 
-<div class="editor-panel">
-
-<div class="file-bar" id="fileBar">
-
-<div class="file-tab active" onclick="openFile('index.html')" oncontextmenu="showMenu(event,'index.html')">
-index.html
+    <!-- Right click menu --> 
+     <div id="contextMenu" class="context-menu"> 
+    <div onclick="renameFile()">Rename</div> 
+    <div onclick="deleteFile()">Delete</div> 
 </div>
 
-<div class="file-tab" onclick="openFile('styles.css')" oncontextmenu="showMenu(event,'styles.css')">
-styles.css
+    <textarea id="code-editor"></textarea>
+  </div>
+
+  <div class="preview">
+    <iframe id="preview"></iframe>
+  </div>
 </div>
 
-<div class="file-tab" onclick="openFile('script.js')" oncontextmenu="showMenu(event,'script.js')">
-script.js
-</div>
+<!-- Project save section -->
+<input id="project-name" placeholder="Project Name">
+<button id="save-btn">Save Project</button>
 
-<button class="new-file" id="newFileBtn" onclick="createFile()">+</button>
-
-</div>
-
-<!-- Right click menu -->
-<div id="contextMenu" class="context-menu">
-<div onclick="renameFile()">Rename</div>
-<div onclick="deleteFile()">Delete</div>
-</div>
-
-<textarea id="code-editor"></textarea>
-
-</div>
-
-<div class="preview">
-<iframe id="preview"></iframe>
-</div>
-
-</div>
-
-<script src="editor.js"></script>
+<script type="module" src="editor.js"></script>
 
 </body>
 </html>

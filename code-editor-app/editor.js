@@ -257,3 +257,74 @@ tab.appendChild(close);
 attachTabEvents(tab,name);
 
 });
+
+// code-editor-app/editor.js
+import { supabase } from './supabase.js'
+
+// Save Project
+const saveButton = document.getElementById('save-btn')
+if (saveButton) {
+  saveButton.addEventListener('click', async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    const project = {
+      id: window.currentProjectId, // optional, set when editing existing project
+      name: document.getElementById('project-name').value || 'Untitled Project',
+      html: document.getElementById('code-editor').value || '',
+      css: '', // handle separate CSS file logic if needed
+      js: ''   // handle separate JS file logic if needed
+    }
+
+    const { data, error } = await supabase
+      .from('projects')
+      .upsert({
+        id: project.id || undefined,
+        user_id: user.id,
+        name: project.name,
+        html: project.html,
+        css: project.css,
+        js: project.js,
+        updated_at: new Date()
+      })
+      .select()
+
+    if (error) console.error(error)
+    else {
+      alert('Project saved!')
+      window.currentProjectId = data[0].id
+    }
+  })
+}
+
+// Load User Projects
+export async function loadUserProjects() {
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error(error)
+    return []
+  }
+  return data
+}
+
+// Load project into editor
+export async function openProject(projectId) {
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('id', projectId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (error) return console.error(error)
+
+  window.currentProjectId = data.id
+  document.getElementById('project-name').value = data.name
+  document.getElementById('code-editor').value = data.html
+}
