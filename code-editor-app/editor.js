@@ -1,368 +1,159 @@
-if(!sessionStorage.getItem("loggedInUser")){
-window.location.href="index.html";
-}
+import { createClient } from '@supabase/supabase-js';
 
-const user=sessionStorage.getItem("loggedInUser");
+// --- Supabase setup ---
+const supabaseUrl = 'https://pofaqrahjhsjfraziodr.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZmFxcmFoamhzamZyYXppb2RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MTkwODMsImV4cCI6MjA4ODQ5NTA4M30.K2XaqVEoVF5EYf4wqnXKsB7yrb_UHUj4F6RNpmaFa2M';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-function logout(){
-sessionStorage.removeItem("loggedInUser");
-window.location.href="index.html";
-}
-
-let files={
-"index.html":"<h1>Hello World</h1>",
-"styles.css":"h1{color:red;}",
-"script.js":"console.log('hello');"
+// ---------------------------
+// File tabs system
+// ---------------------------
+let files = {
+  'index.html': '',
+  'styles.css': '',
+  'script.js': ''
 };
+let currentFile = 'index.html';
 
-let currentFile="index.html";
-let selectedFile=null;
-
-const editor=document.getElementById("code-editor");
-const fileBar=document.getElementById("fileBar");
-const newBtn=document.getElementById("newFileBtn");
-
-loadProject();
-
-editor.value=files[currentFile];
-
-function openFile(name){
-
-saveCurrent();
-
-currentFile=name;
-
-editor.value=files[name];
-
-document.querySelectorAll(".file-tab").forEach(tab=>{
-tab.classList.remove("active");
-
-if(tab.dataset.file===name){
-tab.classList.add("active");
+function openFile(filename) {
+  currentFile = filename;
+  document.getElementById('code-editor').value = files[filename] || '';
 }
+
+function createFile() {
+  const name = prompt("Enter new file name:");
+  if (!name) return;
+  files[name] = '';
+  const fileBar = document.getElementById('fileBar');
+  const tab = document.createElement('div');
+  tab.className = 'file-tab';
+  tab.textContent = name;
+  tab.onclick = () => openFile(name);
+  tab.oncontextmenu = (e) => { e.preventDefault(); showMenu(e, name); };
+  fileBar.appendChild(tab);
+}
+
+function renameFile() {
+  const newName = prompt("Enter new file name:");
+  if (!newName) return;
+  files[newName] = files[currentFile];
+  delete files[currentFile];
+  document.querySelector(`.file-tab.active`).textContent = newName;
+  currentFile = newName;
+}
+
+function deleteFile() {
+  if (!confirm(`Delete ${currentFile}?`)) return;
+  delete files[currentFile];
+  const tab = document.querySelector(`.file-tab.active`);
+  tab.remove();
+  const remainingFiles = Object.keys(files);
+  currentFile = remainingFiles[0] || '';
+  if (currentFile) openFile(currentFile);
+}
+
+function showMenu(event, filename) {
+  const menu = document.getElementById('contextMenu');
+  menu.style.top = event.clientY + 'px';
+  menu.style.left = event.clientX + 'px';
+  menu.style.display = 'block';
+  currentFile = filename;
+}
+
+document.body.addEventListener('click', () => {
+  document.getElementById('contextMenu').style.display = 'none';
 });
 
+// ---------------------------
+// Run / Preview logic
+// ---------------------------
+function runCode() {
+  const html = files['index.html'] || '';
+  const css = files['styles.css'] || '';
+  const js = files['script.js'] || '';
+  const preview = document.getElementById('preview');
+  preview.srcdoc = `
+    <html>
+      <head><style>${css}</style></head>
+      <body>${html}
+        <script>${js}<\/script>
+      </body>
+    </html>
+  `;
 }
 
-function attachTabEvents(tab,name){
-
-tab.dataset.file=name;
-
-tab.onclick=()=>openFile(name);
-
-tab.oncontextmenu=(e)=>{
-e.preventDefault();
-showMenu(e,name);
-};
-
-}
-
-/* CLOSE TAB */
-
-function closeTab(name){
-
-delete files[name];
-
-document.querySelectorAll(".file-tab").forEach(tab=>{
-if(tab.dataset.file===name){
-tab.remove();
-}
-});
-
-if(currentFile===name){
-
-currentFile=Object.keys(files)[0];
-
-editor.value=files[currentFile];
-
-}
-
-saveProject();
-
-}
-
-/* CREATE FILE */
-
-function createFile(){
-
-let name=prompt("File name");
-
-if(!name || files[name]) return;
-
-files[name]="";
-
-const tab=document.createElement("div");
-
-tab.className="file-tab";
-
-const label=document.createElement("span");
-label.textContent=name;
-
-const close=document.createElement("span");
-close.textContent="×";
-close.className="close-tab";
-
-close.onclick=(e)=>{
-e.stopPropagation();
-closeTab(name);
-};
-
-tab.appendChild(label);
-tab.appendChild(close);
-
-attachTabEvents(tab,name);
-
-fileBar.insertBefore(tab,newBtn);
-
-}
-
-/* SAVE CURRENT FILE */
-
-function saveCurrent(){
-files[currentFile]=editor.value;
-saveProject();
-}
-
-/* RUN CODE */
-
-function runCode(){
-
-saveCurrent();
-
-let html=files["index.html"] || "";
-let css="<style>"+(files["styles.css"]||"")+"</style>";
-let js="<script>"+(files["script.js"]||"")+"<\/script>";
-
-document.getElementById("preview").srcdoc=html+css+js;
-
-}
-
-/* AUTO SAVE PROJECT */
-
-function saveProject(){
-
-localStorage.setItem(
-"userProject_"+user,
-JSON.stringify(files)
-);
-
-}
-
-/* LOAD PROJECT */
-
-function loadProject(){
-
-const saved=localStorage.getItem("userProject_"+user);
-
-if(saved){
-
-files=JSON.parse(saved);
-
-}
-
-}
-
-/* SAVE WHILE TYPING */
-
-editor.addEventListener("input",()=>{
-saveCurrent();
-});
-
-/* RIGHT CLICK MENU */
-
-function showMenu(e,file){
-
-selectedFile=file;
-
-const menu=document.getElementById("contextMenu");
-
-menu.style.display="flex";
-menu.style.left=e.pageX+"px";
-menu.style.top=e.pageY+"px";
-
-}
-
-document.addEventListener("click",()=>{
-document.getElementById("contextMenu").style.display="none";
-});
-
-function renameFile(){
-
-let newName=prompt("New name",selectedFile);
-
-if(!newName || files[newName]) return;
-
-files[newName]=files[selectedFile];
-delete files[selectedFile];
-
-document.querySelectorAll(".file-tab").forEach(tab=>{
-
-if(tab.dataset.file===selectedFile){
-
-tab.dataset.file=newName;
-
-tab.querySelector("span").textContent=newName;
-
-/* update close button */
-const closeBtn=tab.querySelector(".close-tab");
-
-closeBtn.onclick=(e)=>{
-e.stopPropagation();
-closeTab(newName);
-};
-
-attachTabEvents(tab,newName);
-
-}
-
-});
-
-if(currentFile===selectedFile){
-currentFile=newName;
-}
-
-saveProject();
-
-}
-
-function deleteFile(){
-
-closeTab(selectedFile);
-
-}
-
-/* Attach events to default tabs */
-
-document.querySelectorAll(".file-tab").forEach(tab=>{
-
-const name=tab.textContent;
-
-tab.innerHTML="";
-
-const label=document.createElement("span");
-label.textContent=name;
-
-const close=document.createElement("span");
-close.textContent="×";
-close.className="close-tab";
-
-close.onclick=(e)=>{
-e.stopPropagation();
-closeTab(name);
-};
-
-tab.appendChild(label);
-tab.appendChild(close);
-
-attachTabEvents(tab,name);
-
-});
-
-// code-editor-app/editor.js
-import { supabase } from './supabase.js'
-
-// Save Project
-const saveButton = document.getElementById('save-btn')
-if (saveButton) {
-  saveButton.addEventListener('click', async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-
-    const project = {
-      id: window.currentProjectId, // optional, set when editing existing project
-      name: document.getElementById('project-name').value || 'Untitled Project',
-      html: document.getElementById('code-editor').value || '',
-      css: '', // handle separate CSS file logic if needed
-      js: ''   // handle separate JS file logic if needed
-    }
-
-    const { data, error } = await supabase
-      .from('projects')
-      .upsert({
-        id: project.id || undefined,
-        user_id: user.id,
-        name: project.name,
-        html: project.html,
-        css: project.css,
-        js: project.js,
-        updated_at: new Date()
-      })
-      .select()
-
-    if (error) console.error(error)
-    else {
-      alert('Project saved!')
-      window.currentProjectId = data[0].id
-    }
-  })
-}
-
-// Load User Projects
-export async function loadUserProjects() {
-  const { data: { user } } = await supabase.auth.getUser()
+// ---------------------------
+// Save project to Supabase
+// ---------------------------
+async function saveProject() {
+  const name = document.getElementById('project-name').value;
+  if (!name) return alert('Enter a project name!');
+  
   const { data, error } = await supabase
     .from('projects')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    console.error(error)
-    return []
-  }
-  return data
+    .insert([{
+      user_id: supabase.auth.user().id,
+      project_name: name,
+      files: files,
+      created_at: new Date()
+    }]);
+  
+  if (error) console.error(error);
+  else loadProjects();
 }
 
-// Load project into editor
-export async function openProject(projectId) {
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data, error } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('id', projectId)
-    .eq('user_id', user.id)
-    .single()
-
-  if (error) return console.error(error)
-
-  window.currentProjectId = data.id
-  document.getElementById('project-name').value = data.name
-  document.getElementById('code-editor').value = data.html
-}
-
-// Fetch saved projects for the current user
+// ---------------------------
+// Load projects from Supabase
+// ---------------------------
 async function loadProjects() {
   const { data, error } = await supabase
     .from('projects')
     .select('*')
-    .eq('user_id', supabase.auth.user().id) // only the logged-in user's projects
+    .eq('user_id', supabase.auth.user().id)
     .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching projects:', error);
-    return;
-  }
-
+  if (error) return console.error(error);
   displayProjects(data);
 }
 
 function displayProjects(projects) {
   const list = document.getElementById('project-list');
-  list.innerHTML = ''; // clear old entries
+  list.innerHTML = '';
 
-  projects.forEach(project => {
+  projects.forEach(proj => {
     const btn = document.createElement('button');
-    btn.textContent = project.project_name;
-    btn.onclick = () => openProject(project); // load project into editor
+    btn.textContent = proj.project_name;
+    btn.onclick = () => {
+      files = proj.files || {};
+      const firstFile = Object.keys(files)[0];
+      if (firstFile) openFile(firstFile);
+    };
     list.appendChild(btn);
   });
 }
 
-function openProject(project) {
-  document.getElementById('html-editor').value = project.html || '';
-  document.getElementById('css-editor').value = project.css || '';
-  document.getElementById('js-editor').value = project.js || '';
+// ---------------------------
+// Logout logic
+// ---------------------------
+async function logout() {
+  const { error } = await supabase.auth.signOut();
+  if (error) console.error(error);
+  else window.location.href = '/';
 }
 
+// ---------------------------
+// Initialize editor
+// ---------------------------
 window.addEventListener('DOMContentLoaded', () => {
   loadProjects();
+  openFile(currentFile);
+
+  // Attach runCode to global so dashboard.html buttons can call it
+  window.runCode = runCode;
+  window.logout = logout;
+  window.createFile = createFile;
+  window.renameFile = renameFile;
+  window.deleteFile = deleteFile;
+  window.showMenu = showMenu;
+  window.saveProject = saveProject;
 });
